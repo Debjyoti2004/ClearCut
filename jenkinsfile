@@ -1,0 +1,225 @@
+@Library('shared-lib') _
+
+pipeline {
+    agent any
+
+    options {
+        skipDefaultCheckout(true)
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        SONAR_HOME = tool "sonar-scanner"
+    }
+
+    parameters {
+        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Docker image tag for frontend')
+        string(name: 'BACKEND_DOCKER_TAG', defaultValue: '', description: 'Docker image tag for backend')
+    }
+
+    stages {
+        stage("Validate: Docker Tags") {
+            steps {
+                script {
+                    if (!params.FRONTEND_DOCKER_TAG) {
+                        error "FRONTEND_DOCKER_TAG is required"
+                    }
+                    if (!params.BACKEND_DOCKER_TAG) {
+                        error "BACKEND_DOCKER_TAG is required"
+                    }
+                }
+            }
+        }
+
+        stage("Cleanup: Workspace") {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage("Git: Clone ClearCut Repository") {
+            steps {
+                script {
+                    code_checkout("https://github.com/Debjyoti2004/ClearCut.git", "master", "gitCredentials")
+                }
+            }
+        }
+
+        stage("Security: Filesystem Trivy Scan") {
+            steps {
+                script {
+                    trivy_scan()
+                }
+            }
+        }
+
+        stage("Security: Trivy Image Scans") {
+            parallel {
+                stage("Trivy: Backend Image") {
+                    steps {
+                        script {
+                            trivy_image_scan(
+                                imageName: 'debjyoti08/clearcut_backend',
+                                imageTag: params.BACKEND_DOCKER_TAG
+                            )
+                        }
+                    }
+                }
+
+                stage("Trivy: Frontend Image") {
+                    steps {
+                        script {
+                            trivy_image_scan(
+                                imageName: 'debjyoti08/clearcut_frontend',
+                                imageTag: params.FRONTEND_DOCKER_TAG
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        stage("Security: OWASP Dependency Check") {
+            options {
+                timeout(time: 40, unit: 'MINUTES') // to handle first-time long run
+            }
+            steps {
+                script {
+                    runDependencyCheck()
+                }
+            }
+        }
+
+        stage("Static Code Analysis: SonarQube Scan") {
+            steps {
+                script {
+                    runSonarQubeScan("sonar-scanner", "ClearCut", "ClearCut")
+                }
+            }
+        }
+
+        stage("Static Code Analysis: Quality Gate") {
+            steps {
+                script {
+                    runSonarQubeQualityGate()
+                }
+            }
+        }
+
+        stage("Environment: Frontend ENV Setup") {
+            steps {
+                script {
+                    dir("Automation") {
+                        sh "chmod +x updatefrontendnew.sh"
+                        sh "./updatefrontendnew.sh"
+                    }
+                }
+            }
+        }
+
+        stage("Docker: Build Backend Image") {
+            steps {
+                script {
+                    build_docker_image(
+                        imageName: 'debjyoti08/clearcut_backend',
+                        imageTag: params.BACKEND_DOCKER_TAG,
+                        dockerfile: 'backend/Dockerfile',
+                        context: 'backend'
+                    )
+                }
+            }
+        }
+
+        stage("Docker: Build Frontend Image") {
+            steps {
+                script {
+                    build_docker_image(
+                        imageName: 'debjyoti08/clearcut_frontend',
+                        imageTag: params.FRONTEND_DOCKER_TAG,
+                        dockerfile: 'frontend/Dockerfile',
+                        context: 'frontend'
+                    )
+                }
+            }
+        }
+
+        stage("Docker: Push Backend Image") {
+            steps {
+                script {
+                    push_docker_image(
+                        imageName: 'debjyoti08/clearcut_backend',
+                        imageTag: params.BACKEND_DOCKER_TAG,
+                        credentials: 'docker-hub-credentials'
+                    )
+                }
+            }
+        }
+
+        stage("Docker: Push Frontend Image") {
+            steps {
+                script {
+                    push_docker_image(
+                        imageName: 'debjyoti08/clearcut_frontend',
+                        imageTag: params.FRONTEND_DOCKER_TAG,
+                        credentials: 'docker-hub-credentials'
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "[INFO] Build succeeded. Archiving artifacts and triggering CD pipeline..."
+
+            archiveArtifacts artifacts: '*.xml', followSymlinks: false
+
+            build job: "ClearCut-CD", parameters: [
+                string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}"),
+                string(name: 'BACKEND_DOCKER_TAG', value: "${params.BACKEND_DOCKER_TAG}")
+            ]
+
+            mail to: 'debjyotishit27@gmail.com',
+                 subject: "✅ Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """\
+🎉 **Build Successful!**
+
+✅ **Job:** ${env.JOB_NAME}  
+🔢 **Build Number:** ${env.BUILD_NUMBER}  
+🔗 **Build URL:** ${env.BUILD_URL}  
+🧑‍💼 **Triggered By:** ${currentBuild.getBuildCauses()[0].shortDescription}  
+
+Artifacts have been archived, and the deployment pipeline (ClearCut-CD) has been triggered.
+
+Regards,  
+Jenkins CI/CD
+"""
+        }
+
+        failure {
+            echo "[ERROR] Build failed. Sending failure notification..."
+
+            mail to: 'debjyotishit27@gmail.com',
+                 subject: "❌ Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """\
+⚠️ **Build Failed**
+
+❌ **Job:** ${env.JOB_NAME}  
+🔢 **Build Number:** ${env.BUILD_NUMBER}  
+🔗 **Build URL:** ${env.BUILD_URL}  
+🧑‍💼 **Triggered By:** ${currentBuild.getBuildCauses()[0].shortDescription}  
+
+Please check the Jenkins console output and take necessary action.
+
+Regards,  
+Jenkins CI/CD
+"""
+        }
+
+        always {
+            echo "[INFO] Build complete. Clean up or post-processing can be done here if needed."
+        }
+    }
+}

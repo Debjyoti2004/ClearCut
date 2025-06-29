@@ -1,0 +1,116 @@
+@Library('shared-lib') _
+
+pipeline {
+    agent any
+
+    options {
+        skipDefaultCheckout(true)
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Frontend Docker tag of the image built by the CI job')
+        string(name: 'BACKEND_DOCKER_TAG', defaultValue: '', description: 'Backend Docker tag of the image built by the CI job')
+    }
+
+    stages {
+        stage("Cleanup: Workspace") {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage("Validation: Docker Tags") {
+            steps {
+                script {
+                    if (!params.FRONTEND_DOCKER_TAG?.trim()) {
+                        error "FRONTEND_DOCKER_TAG is required for deployment!"
+                    }
+                    if (!params.BACKEND_DOCKER_TAG?.trim()) {
+                        error "BACKEND_DOCKER_TAG is required for deployment!"
+                    }
+
+                    echo "FRONTEND_DOCKER_TAG = ${params.FRONTEND_DOCKER_TAG}"
+                    echo "BACKEND_DOCKER_TAG  = ${params.BACKEND_DOCKER_TAG}"
+                }
+            }
+        }
+
+        stage("Git: Clone ClearCut Repository") {
+            steps {
+                script {
+                    code_checkout(
+                        "https://github.com/Debjyoti2004/ClearCut.git",
+                        "master",
+                        "gitCredentials"
+                    )
+                }
+            }
+        }
+
+        stage("Update: Kubernetes Manifests") {
+            steps {
+                script {
+                    def imageReplacements = [
+                        "debjyoti08/clearcut_backend" : params.BACKEND_DOCKER_TAG,
+                        "debjyoti08/clearcut_frontend": params.FRONTEND_DOCKER_TAG
+                    ]
+
+                    update_k8s_manifests(
+                        replacements: imageReplacements,
+                        manifestsPath: 'k8s',
+                        gitCredentials: 'gitCredentials',
+                        gitUserName: 'Debjyoti2004',
+                        gitUserEmail: 'debjyotishit27@gmail.com'
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "[✅] CD pipeline completed successfully."
+
+            mail to: 'debjyotishit27@gmail.com',
+                 subject: "✅ ClearCut CD Deployed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """\
+<h3>✅ Deployment Successful</h3>
+<b>Job:</b> ${env.JOB_NAME}<br>
+<b>Build Number:</b> ${env.BUILD_NUMBER}<br>
+<b>Frontend Tag:</b> ${params.FRONTEND_DOCKER_TAG}<br>
+<b>Backend Tag:</b> ${params.BACKEND_DOCKER_TAG}<br>
+<b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a><br><br>
+<i>All Kubernetes manifests have been updated with the latest image tags and committed to the repository.</i><br><br>
+<b>Triggered By:</b> ${currentBuild.getBuildCauses()[0].shortDescription}<br><br>
+Regards,<br>
+Jenkins CD Pipeline
+"""
+        }
+
+        failure {
+            echo "[❌] CD pipeline failed."
+
+            mail to: 'debjyotishit27@gmail.com',
+                 subject: "❌ ClearCut CD Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """\
+<h3>❌ Deployment Failed</h3>
+<b>Job:</b> ${env.JOB_NAME}<br>
+<b>Build Number:</b> ${env.BUILD_NUMBER}<br>
+<b>Frontend Tag:</b> ${params.FRONTEND_DOCKER_TAG}<br>
+<b>Backend Tag:</b> ${params.BACKEND_DOCKER_TAG}<br>
+<b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a><br><br>
+<i>Please check the Jenkins console logs and fix the issue.</i><br><br>
+<b>Triggered By:</b> ${currentBuild.getBuildCauses()[0].shortDescription}<br><br>
+Regards,<br>
+Jenkins CD Pipeline
+"""
+        }
+
+        always {
+            echo "[ℹ️] CD pipeline finished (either success or failure)."
+        }
+    }
+}
