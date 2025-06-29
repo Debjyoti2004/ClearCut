@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: clearcut-frontend
-          image: debjyoti08/clearcut_frontend:latest
+          image: debjyoti08/clearcut_frontend:v1.1.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
