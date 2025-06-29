@@ -41,9 +41,16 @@ pipeline {
 
         stage("Git: Clone ClearCut Repository") {
             steps {
-                script {
-                    code_checkout("https://github.com/Debjyoti2004/ClearCut.git", "master", "gitCredentials")
+                retry(2){
+                    script {
+                        code_checkout(
+                            repoUrl: "https://github.com/Debjyoti2004/ClearCut.git",
+                            branch: "master",
+                            credentialsId: "gitCredentials"
+                        )
+                    }
                 }
+                
             }
         }
 
