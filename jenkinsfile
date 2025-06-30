@@ -121,6 +121,17 @@ pipeline {
             }
         }
 
+        stage("Trivy: Backend Image") {
+            steps {
+                script {
+                    sh """
+                        echo "Scanning backend image with Trivy (non-blocking)..."
+                        trivy image --exit-code 0 --severity HIGH,CRITICAL debjyoti08/clearcut_backend:${params.BACKEND_DOCKER_TAG} > trivy-backend.txt || true
+                    """
+                }
+            }
+        }
+
         stage("Docker: Build Frontend Image") {
             steps {
                 script {
@@ -174,7 +185,7 @@ pipeline {
         success {
             echo "[✅] Build succeeded. Triggering CD pipeline..."
 
-            archiveArtifacts artifacts: '*.xml', followSymlinks: false
+            archiveArtifacts artifacts: '*.xml,*.txt', followSymlinks: false
 
             build job: "ClearCut-CD", parameters: [
                 string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}"),
@@ -184,19 +195,20 @@ pipeline {
             mail(
                 to: 'debjyotishit27@gmail.com',
                 subject: "✅ CI Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """\
+                body: """
 <!DOCTYPE html>
 <html>
-<body style="font-family: Arial, sans-serif;">
+<body style=\"font-family: Arial, sans-serif;\">
 
-<h2 style="color: green;">✅ CI Build Successful</h2>
+<h2 style=\"color: green;\">✅ CI Build Successful</h2>
 
-<table cellspacing="5" cellpadding="5">
+<table cellspacing=\"5\" cellpadding=\"5\">
 <tr><td><b>🛠️ Job:</b></td><td>${env.JOB_NAME}</td></tr>
 <tr><td><b>🔢 Build Number:</b></td><td>${env.BUILD_NUMBER}</td></tr>
-<tr><td><b>🌐 Build URL:</b></td><td><a href="${env.BUILD_URL}">${env.BUILD_URL}</a></td></tr>
+<tr><td><b>🌐 Build URL:</b></td><td><a href=\"${env.BUILD_URL}\">${env.BUILD_URL}</a></td></tr>
 <tr><td><b>🐳 Frontend Tag:</b></td><td>${params.FRONTEND_DOCKER_TAG}</td></tr>
 <tr><td><b>🐳 Backend Tag:</b></td><td>${params.BACKEND_DOCKER_TAG}</td></tr>
+<tr><td><b>📎 Artifacts:</b></td><td><a href=\"${env.BUILD_URL}artifact/\">View Files</a></td></tr>
 <tr><td><b>👤 Triggered By:</b></td><td>${currentBuild.getBuildCauses()[0].shortDescription}</td></tr>
 </table>
 
@@ -204,7 +216,7 @@ pipeline {
 <p>The CI build has completed successfully and all Docker images have been built, scanned, and pushed. The CD pipeline (<b>ClearCut-CD</b>) has also been triggered automatically.</p>
 
 <hr>
-<p style="color: #666;"><i>This is an automated message. Please do not reply directly to this email.</i></p>
+<p style=\"color: #666;\"><i>This is an automated message. Please do not reply directly to this email.</i></p>
 
 </body>
 </html>
@@ -220,27 +232,28 @@ pipeline {
             mail(
                 to: 'debjyotishit27@gmail.com',
                 subject: "❌ CI Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """\
+                body: """
 <!DOCTYPE html>
 <html>
-<body style="font-family: Arial, sans-serif;">
+<body style=\"font-family: Arial, sans-serif;\">
 
-<h2 style="color: red;">❌ CI Build Failed</h2>
+<h2 style=\"color: red;\">❌ CI Build Failed</h2>
 
-<table cellspacing="5" cellpadding="5">
+<table cellspacing=\"5\" cellpadding=\"5\">
 <tr><td><b>🛠️ Job:</b></td><td>${env.JOB_NAME}</td></tr>
 <tr><td><b>🔢 Build Number:</b></td><td>${env.BUILD_NUMBER}</td></tr>
-<tr><td><b>🌐 Build URL:</b></td><td><a href="${env.BUILD_URL}">${env.BUILD_URL}</a></td></tr>
+<tr><td><b>🌐 Build URL:</b></td><td><a href=\"${env.BUILD_URL}\">${env.BUILD_URL}</a></td></tr>
 <tr><td><b>🐳 Frontend Tag:</b></td><td>${params.FRONTEND_DOCKER_TAG}</td></tr>
 <tr><td><b>🐳 Backend Tag:</b></td><td>${params.BACKEND_DOCKER_TAG}</td></tr>
+<tr><td><b>📎 Artifacts:</b></td><td><a href=\"${env.BUILD_URL}artifact/\">View Files</a></td></tr>
 <tr><td><b>👤 Triggered By:</b></td><td>${currentBuild.getBuildCauses()[0].shortDescription}</td></tr>
 </table>
 
 <br>
-<p style="color: #a00;"><b>Action Required:</b> Please review the Jenkins console logs and take appropriate steps to resolve the issue.</p>
+<p style=\"color: #a00;\"><b>Action Required:</b> Please review the Jenkins console logs and take appropriate steps to resolve the issue.</p>
 
 <hr>
-<p style="color: #666;"><i>This is an automated message. Please do not reply directly to this email.</i></p>
+<p style=\"color: #666;\"><i>This is an automated message. Please do not reply directly to this email.</i></p>
 
 </body>
 </html>
