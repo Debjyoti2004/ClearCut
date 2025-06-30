@@ -9,10 +9,10 @@
 set -euo pipefail
 
 # ---------- Configuration ----------
-INSTANCE_ID="i-030da7d31a1dbbffc"
+INSTANCE_ID="i-0fd6386b421fdd1fe"
 ENV_FILE_PATH="../frontend/.env"
-AWS_REGION="ap-south-1" 
-PORT="4000"
+AWS_REGION="us-east-1" 
+PORT="32000"
 KEY="VITE_BACKEND_URL"
 
 # ---------- Fetch EC2 Public IP ----------
