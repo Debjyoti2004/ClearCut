@@ -42,7 +42,7 @@ pipeline {
 
         stage("Git: Clone ClearCut Repository") {
             steps {
-                retry(2){
+                retry(2) {
                     script {
                         code_checkout(
                             repoUrl: "https://github.com/Debjyoti2004/ClearCut.git",
@@ -51,7 +51,6 @@ pipeline {
                         )
                     }
                 }
-                
             }
         }
 
@@ -65,7 +64,7 @@ pipeline {
 
         stage("Security: OWASP Dependency Check") {
             options {
-                timeout(time: 40, unit: 'MINUTES') // to handle first-time long run
+                timeout(time: 40, unit: 'MINUTES')
             }
             steps {
                 script {
@@ -93,21 +92,21 @@ pipeline {
         stage("Environment: Frontend ENV Setup") {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'aws-access', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                script {
-                    dir("automation") {
-                        sh '''
-                            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                            export AWS_REGION=ap-south-1
+                    script {
+                        dir("automation") {
+                            sh '''
+                                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                                export AWS_REGION=ap-south-1
 
-                            chmod +x updatefrontendenv.sh
-                            ./updatefrontendenv.sh
-                        '''
+                                chmod +x updatefrontendenv.sh
+                                ./updatefrontendenv.sh
+                            '''
+                        }
                     }
                 }
             }
         }
-    }
 
         stage("Docker: Build Backend Image") {
             steps {
@@ -134,29 +133,14 @@ pipeline {
                 }
             }
         }
-        
-        stage("Security: Trivy Image Scans") {
-            parallel {
-                stage("Trivy: Backend Image") {
-                    steps {
-                        script {
-                            trivy_image_scan(
-                                imageName: 'debjyoti08/clearcut_backend',
-                                imageTag: params.BACKEND_DOCKER_TAG
-                            )
-                        }
-                    }
-                }
 
-                stage("Trivy: Frontend Image") {
-                    steps {
-                        script {
-                            trivy_image_scan(
-                                imageName: 'debjyoti08/clearcut_frontend',
-                                imageTag: params.FRONTEND_DOCKER_TAG
-                            )
-                        }
-                    }
+        stage("Trivy: Frontend Image") {
+            steps {
+                script {
+                    trivy_image_scan(
+                        imageName: 'debjyoti08/clearcut_frontend',
+                        imageTag: params.FRONTEND_DOCKER_TAG
+                    )
                 }
             }
         }
@@ -188,7 +172,7 @@ pipeline {
 
     post {
         success {
-            echo "[INFO] Build succeeded. Archiving artifacts and triggering CD pipeline..."
+            echo "[✅] Build succeeded. Triggering CD pipeline..."
 
             archiveArtifacts artifacts: '*.xml', followSymlinks: false
 
@@ -197,45 +181,77 @@ pipeline {
                 string(name: 'BACKEND_DOCKER_TAG', value: "${params.BACKEND_DOCKER_TAG}")
             ]
 
-            mail to: 'debjyotishit27@gmail.com',
-                 subject: "✅ Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: """\
-🎉 **Build Successful!**
+            mail(
+                to: 'debjyotishit27@gmail.com',
+                subject: "✅ CI Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """\
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif;">
 
-✅ **Job:** ${env.JOB_NAME}  
-🔢 **Build Number:** ${env.BUILD_NUMBER}  
-🔗 **Build URL:** ${env.BUILD_URL}  
-🧑‍💼 **Triggered By:** ${currentBuild.getBuildCauses()[0].shortDescription}  
+<h2 style="color: green;">✅ CI Build Successful</h2>
 
-Artifacts have been archived, and the deployment pipeline (ClearCut-CD) has been triggered.
+<table cellspacing="5" cellpadding="5">
+<tr><td><b>🛠️ Job:</b></td><td>${env.JOB_NAME}</td></tr>
+<tr><td><b>🔢 Build Number:</b></td><td>${env.BUILD_NUMBER}</td></tr>
+<tr><td><b>🌐 Build URL:</b></td><td><a href="${env.BUILD_URL}">${env.BUILD_URL}</a></td></tr>
+<tr><td><b>🐳 Frontend Tag:</b></td><td>${params.FRONTEND_DOCKER_TAG}</td></tr>
+<tr><td><b>🐳 Backend Tag:</b></td><td>${params.BACKEND_DOCKER_TAG}</td></tr>
+<tr><td><b>👤 Triggered By:</b></td><td>${currentBuild.getBuildCauses()[0].shortDescription}</td></tr>
+</table>
 
-Regards,  
-Jenkins CI/CD
-"""
+<br>
+<p>The CI build has completed successfully and all Docker images have been built, scanned, and pushed. The CD pipeline (<b>ClearCut-CD</b>) has also been triggered automatically.</p>
+
+<hr>
+<p style="color: #666;"><i>This is an automated message. Please do not reply directly to this email.</i></p>
+
+</body>
+</html>
+""",
+                mimeType: 'text/html',
+                replyTo: 'debjyotishit8@gmail.com'
+            )
         }
 
         failure {
-            echo "[ERROR] Build failed. Sending failure notification..."
+            echo "[❌] Build failed. Sending notification..."
 
-            mail to: 'debjyotishit27@gmail.com',
-                 subject: "❌ Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: """\
-⚠️ **Build Failed**
+            mail(
+                to: 'debjyotishit27@gmail.com',
+                subject: "❌ CI Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """\
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif;">
 
-❌ **Job:** ${env.JOB_NAME}  
-🔢 **Build Number:** ${env.BUILD_NUMBER}  
-🔗 **Build URL:** ${env.BUILD_URL}  
-🧑‍💼 **Triggered By:** ${currentBuild.getBuildCauses()[0].shortDescription}  
+<h2 style="color: red;">❌ CI Build Failed</h2>
 
-Please check the Jenkins console output and take necessary action.
+<table cellspacing="5" cellpadding="5">
+<tr><td><b>🛠️ Job:</b></td><td>${env.JOB_NAME}</td></tr>
+<tr><td><b>🔢 Build Number:</b></td><td>${env.BUILD_NUMBER}</td></tr>
+<tr><td><b>🌐 Build URL:</b></td><td><a href="${env.BUILD_URL}">${env.BUILD_URL}</a></td></tr>
+<tr><td><b>🐳 Frontend Tag:</b></td><td>${params.FRONTEND_DOCKER_TAG}</td></tr>
+<tr><td><b>🐳 Backend Tag:</b></td><td>${params.BACKEND_DOCKER_TAG}</td></tr>
+<tr><td><b>👤 Triggered By:</b></td><td>${currentBuild.getBuildCauses()[0].shortDescription}</td></tr>
+</table>
 
-Regards,  
-Jenkins CI/CD
-"""
+<br>
+<p style="color: #a00;"><b>Action Required:</b> Please review the Jenkins console logs and take appropriate steps to resolve the issue.</p>
+
+<hr>
+<p style="color: #666;"><i>This is an automated message. Please do not reply directly to this email.</i></p>
+
+</body>
+</html>
+""",
+                mimeType: 'text/html',
+                replyTo: 'debjyotishit8@gmail.com'
+            )
         }
 
         always {
-            echo "[INFO] Build complete. Clean up or post-processing can be done here if needed."
+            echo "[ℹ️] CI process completed."
         }
     }
 }

@@ -7,6 +7,8 @@
 
 set -e
 
+kubectl create namespace monitoring 2>/dev/null || echo "[INFO] Namespace 'monitoring' already exists."
+
 echo "Adding Grafana Helm repo..."
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
@@ -18,4 +20,4 @@ helm install grafana grafana/grafana \
   --set service.type=NodePort \
   --set persistence.enabled=true \
   --set persistence.size=1Gi \
-  --set persistence.storageClassName="standard"
+  --set persistence.storageClassName="manual"

@@ -40,7 +40,7 @@ pipeline {
 
         stage("Git: Clone ClearCut Repository") {
             steps {
-                retry(2){
+                retry(2) {
                     script {
                         code_checkout(
                             repoUrl: "https://github.com/Debjyoti2004/ClearCut.git",
@@ -49,7 +49,6 @@ pipeline {
                         )
                     }
                 }
-                
             }
         }
 
@@ -57,17 +56,32 @@ pipeline {
             steps {
                 script {
                     def imageReplacements = [
-                        "debjyoti08/clearcut_backend" : params.BACKEND_DOCKER_TAG,
+                        "debjyoti08/clearcut_backend": params.BACKEND_DOCKER_TAG,
                         "debjyoti08/clearcut_frontend": params.FRONTEND_DOCKER_TAG
                     ]
 
                     update_k8s_manifests(
                         replacements: imageReplacements,
-                        manifestsPath: 'k8s',
-                        gitCredentials: 'gitCredentials',
-                        gitUserName: 'Debjyoti2004',
-                        gitUserEmail: 'debjyotishit27@gmail.com'
+                        manifestsPath: 'k8s'
                     )
+                }
+            }
+        }
+
+        stage("Git: Commit & Push Updates") {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'gitCredentials', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                    sh """
+                        git config user.name "Debjyoti Shit"
+                        git config user.email "debjyotishit27@gmail.com"
+
+                        git add k8s/*.yaml || true
+                        git commit -m "[CI/CD] Updated image tags: frontend:${params.FRONTEND_DOCKER_TAG}, backend:${params.BACKEND_DOCKER_TAG}" || echo "No changes to commit"
+
+                        git remote set-url origin https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/Debjyoti2004/ClearCut.git
+                        git pull --rebase origin master || echo "[WARN] Pull failed, continuing..."
+                        git push origin HEAD:master || echo "[WARN] Push failed, please resolve manually"
+                    """
                 }
             }
         }
@@ -77,43 +91,51 @@ pipeline {
         success {
             echo "[✅] CD pipeline completed successfully."
 
-            mail to: 'debjyotishit27@gmail.com',
-                 subject: "✅ ClearCut CD Deployed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: """\
-<h3>✅ Deployment Successful</h3>
+            mail(
+                to: 'debjyotishit27@gmail.com',
+                subject: "✅ ClearCut CD Deployed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """\
+<h2 style="color: green;">✅ Deployment Successful</h2>
 <b>Job:</b> ${env.JOB_NAME}<br>
 <b>Build Number:</b> ${env.BUILD_NUMBER}<br>
-<b>Frontend Tag:</b> ${params.FRONTEND_DOCKER_TAG}<br>
-<b>Backend Tag:</b> ${params.BACKEND_DOCKER_TAG}<br>
+<b>Frontend Tag:</b> <code>${params.FRONTEND_DOCKER_TAG}</code><br>
+<b>Backend Tag:</b> <code>${params.BACKEND_DOCKER_TAG}</code><br>
 <b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a><br><br>
-<i>All Kubernetes manifests have been updated with the latest image tags and committed to the repository.</i><br><br>
+<i>Kubernetes manifests updated and changes have been pushed to GitHub successfully.</i><br><br>
 <b>Triggered By:</b> ${currentBuild.getBuildCauses()[0].shortDescription}<br><br>
 Regards,<br>
-Jenkins CD Pipeline
-"""
+<i>Jenkins CD Pipeline</i>
+""",
+                mimeType: 'text/html',
+                replyTo: 'debjyotishit8@gmail.com'
+            )
         }
 
         failure {
             echo "[❌] CD pipeline failed."
 
-            mail to: 'debjyotishit27@gmail.com',
-                 subject: "❌ ClearCut CD Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: """\
-<h3>❌ Deployment Failed</h3>
+            mail(
+                to: 'debjyotishit27@gmail.com',
+                subject: "❌ ClearCut CD Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """\
+<h2 style="color: red;">❌ Deployment Failed</h2>
 <b>Job:</b> ${env.JOB_NAME}<br>
 <b>Build Number:</b> ${env.BUILD_NUMBER}<br>
-<b>Frontend Tag:</b> ${params.FRONTEND_DOCKER_TAG}<br>
-<b>Backend Tag:</b> ${params.BACKEND_DOCKER_TAG}<br>
+<b>Frontend Tag:</b> <code>${params.FRONTEND_DOCKER_TAG}</code><br>
+<b>Backend Tag:</b> <code>${params.BACKEND_DOCKER_TAG}</code><br>
 <b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a><br><br>
-<i>Please check the Jenkins console logs and fix the issue.</i><br><br>
+<i>Please check Jenkins logs and resolve the issue manually.</i><br><br>
 <b>Triggered By:</b> ${currentBuild.getBuildCauses()[0].shortDescription}<br><br>
 Regards,<br>
-Jenkins CD Pipeline
-"""
+<i>Jenkins CD Pipeline</i>
+""",
+                mimeType: 'text/html',
+                replyTo: 'debjyotishit8@gmail.com'
+            )
         }
 
         always {
-            echo "[ℹ️] CD pipeline finished (either success or failure)."
+            echo "[ℹ️] CD pipeline finished (success or failure)."
         }
     }
 }

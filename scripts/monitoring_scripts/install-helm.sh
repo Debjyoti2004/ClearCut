@@ -11,30 +11,36 @@ set -euo pipefail
 HELM_SCRIPT_URL="https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3"
 HELM_SCRIPT="get_helm.sh"
 
-echo "Updating package index..."
+echo "[INFO] Updating system package index..."
 sudo apt-get update -y > /dev/null
 
-echo "Downloading official Helm install script..."
+echo "[INFO] Checking if 'curl' is installed..."
+if ! command -v curl >/dev/null 2>&1; then
+  echo "[INFO] 'curl' not found. Installing curl..."
+  sudo apt-get install -y curl
+fi
+
+echo "[INFO] Downloading official Helm install script from Helm GitHub..."
 if curl -fsSL -o "$HELM_SCRIPT" "$HELM_SCRIPT_URL"; then
-  echo "Helm install script downloaded successfully."
+  echo "[SUCCESS] Helm install script downloaded."
 else
-  echo "Failed to download Helm install script."
+  echo "[ERROR] Failed to download Helm install script from $HELM_SCRIPT_URL"
   exit 1
 fi
 
-echo "Making script executable..."
+echo "[INFO] Making script executable..."
 chmod +x "$HELM_SCRIPT"
 
-echo "Running Helm installer..."
+echo "[INFO] Executing Helm install script..."
 ./"$HELM_SCRIPT"
 
-echo "Cleaning up..."
+echo "[INFO] Cleaning up temporary script..."
 rm -f "$HELM_SCRIPT"
 
-echo "Verifying Helm installation..."
+echo "[INFO] Verifying Helm installation..."
 if command -v helm >/dev/null 2>&1; then
-  echo "Helm installed successfully! Version: $(helm version --short)"
+  echo "[SUCCESS] Helm installed successfully! Version: $(helm version --short)"
 else
-  echo "Helm installation failed."
+  echo "[ERROR] Helm installation failed."
   exit 1
 fi
