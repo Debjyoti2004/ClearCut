@@ -11,7 +11,8 @@ pipeline {
     }
 
     environment {
-        SONAR_HOME = tool "sonar-scanner"
+        SONAR_SCANNER_HOME = tool name: "sonar-scanner"
+        PATH = "${SONAR_SCANNER_HOME}/bin:${env.PATH}"
     }
 
     parameters {
@@ -91,14 +92,22 @@ pipeline {
 
         stage("Environment: Frontend ENV Setup") {
             steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-access', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                 script {
-                    dir("Automation") {
-                        sh "chmod +x updatefrontendnew.sh"
-                        sh "./updatefrontendnew.sh"
+                    dir("automation") {
+                        sh '''
+                            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                            export AWS_REGION=ap-south-1
+
+                            chmod +x updatefrontendenv.sh
+                            ./updatefrontendenv.sh
+                        '''
                     }
                 }
             }
         }
+    }
 
         stage("Docker: Build Backend Image") {
             steps {
