@@ -1,4 +1,4 @@
-# stage 1: Build the React app
+# stage 1: 
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -11,8 +11,10 @@ COPY . .
 
 RUN npm run build
 
-# stage 2: Serve the React app with Nginx
+# stage 2: 
 FROM nginx:stable-alpine
+
+RUN apk update && apk upgrade libxml2
 
 RUN rm -rf /usr/share/nginx/html/*
 
@@ -23,4 +25,3 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
-
