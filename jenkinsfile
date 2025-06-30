@@ -62,32 +62,6 @@ pipeline {
             }
         }
 
-        stage("Security: Trivy Image Scans") {
-            parallel {
-                stage("Trivy: Backend Image") {
-                    steps {
-                        script {
-                            trivy_image_scan(
-                                imageName: 'debjyoti08/clearcut_backend',
-                                imageTag: params.BACKEND_DOCKER_TAG
-                            )
-                        }
-                    }
-                }
-
-                stage("Trivy: Frontend Image") {
-                    steps {
-                        script {
-                            trivy_image_scan(
-                                imageName: 'debjyoti08/clearcut_frontend',
-                                imageTag: params.FRONTEND_DOCKER_TAG
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
         stage("Security: OWASP Dependency Check") {
             options {
                 timeout(time: 40, unit: 'MINUTES') // to handle first-time long run
@@ -148,6 +122,32 @@ pipeline {
                         dockerfile: 'frontend/Dockerfile',
                         context: 'frontend'
                     )
+                }
+            }
+        }
+        
+        stage("Security: Trivy Image Scans") {
+            parallel {
+                stage("Trivy: Backend Image") {
+                    steps {
+                        script {
+                            trivy_image_scan(
+                                imageName: 'debjyoti08/clearcut_backend',
+                                imageTag: params.BACKEND_DOCKER_TAG
+                            )
+                        }
+                    }
+                }
+
+                stage("Trivy: Frontend Image") {
+                    steps {
+                        script {
+                            trivy_image_scan(
+                                imageName: 'debjyoti08/clearcut_frontend',
+                                imageTag: params.FRONTEND_DOCKER_TAG
+                            )
+                        }
+                    }
                 }
             }
         }
