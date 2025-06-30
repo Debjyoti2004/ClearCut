@@ -3,4 +3,4 @@ public_key_path = "/Users/debjyotishit/Documents/ClearCut/terraform/ClearCut-key
 allowed_ip = "0.0.0.0/0"
 aws_region = "us-east-1"
 ami_id = "ami-020cba7c55df1f615"
-instance_type = "t2.micro" 
+instance_type = "t2.large" 
