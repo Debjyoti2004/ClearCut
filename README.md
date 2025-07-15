@@ -273,21 +273,34 @@ Default output format [None]: json
  ```sh
  ./eksctl.sh
  ```
-#### Create EKS Cluster 
-```sh
+---
+
+## ☸️ Provisioning Amazon EKS Cluster & Node Group
+
+Once your AWS CLI, `kubectl`, and `eksctl` are installed and configured, you can create your EKS cluster and attach a node group.
+
+---
+
+### 🚀 Create the EKS Cluster (Without Node Group)
+
+```bash
 eksctl create cluster --name=ClearCut \
-                    --region=us-east-1 \
-                    --version=1.30 \
-                    --without-nodegroup
+                      --region=us-east-1 \
+                      --version=1.30 \
+                      --without-nodegroup
 ```
-### Associate IAM OIDC Provider
+This command will create an empty EKS control plane named ClearCut in us-east-1 without any worker nodes.
+
+### 🔗 Associate IAM OIDC Provider
+OIDC is required for fine-grained IAM roles and service account integration with tools like ArgoCD, ALB Ingress Controller, etc.
 ```sh 
 eksctl utils associate-iam-oidc-provider \
   --region us-east-1 \
   --cluster ClearCut \
   --approve
 ```
-#### Create Nodegroup
+#### 🧱 Create the EKS Node Group
+This will provision 2 EC2 instances (t2.large) and attach them to the ClearCut cluster.
 ```sh 
 eksctl create nodegroup --cluster=ClearCut \
                      --region=us-east-1 \
@@ -300,3 +313,10 @@ eksctl create nodegroup --cluster=ClearCut \
                      --ssh-access \
                      --ssh-public-key=eks-nodegroup-key 
 ````
+⚠️ Ensure you've created the key pair named eks-nodegroup-key in AWS EC2 → Key Pairs before running this command.
+
+## Your EKS cluster and node group should now be ready!
+### 👇🏻 verify nodes using:
+```sh 
+kubectl get nodes
+```
