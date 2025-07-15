@@ -110,3 +110,9 @@ Once the app is developed and tested locally, the automated DevSecOps pipeline t
 All steps are automated and version-controlled, ensuring production-ready, secure deployments with zero manual intervention.
 
 ---
+
+### Ctrate the private key
+
+```sh
+ssh-keygen -f ClearCut-key
+```
