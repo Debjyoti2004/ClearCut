@@ -8,3 +8,10 @@
 <img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/tab-home-page-view.png" width="600" alt="ClearCut Result" />
 
 ---
+## 🧩 Architecture Overview
+
+This project follows a DevSecOps-first approach with CI/CD integration and automated quality checks:
+
+<img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Ci-CD-Architecture.gif" width="850" alt="DevSecOps GitOps Pipeline" />
+
+---
