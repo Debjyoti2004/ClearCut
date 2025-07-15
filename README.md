@@ -112,23 +112,78 @@ Once the app is developed and tested locally, the automated DevSecOps pipeline t
 All steps are automated and version-controlled, ensuring production-ready, secure deployments with zero manual intervention.
 
 ---
-## How pipeline will look after deployment:
+## 🧬 CI/CD Pipeline Overview (Post-Deployment)
 
-- <b>CI pipeline to build and push</b>
+### 🔨 CI Pipeline – Build & Push Stage
+
+The CI pipeline is triggered when code is pushed to GitHub. It builds the project, performs security scans, and pushes the Docker image to the container registry.
+
 ![CI Build Stage](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ClearCut-CI-build.png)
 
-- <b>CD pipeline to update application version</b>
+---
+
+### 🚀 CD Pipeline – Update Application Version
+
+The CD pipeline pulls the latest Docker image, updates the version in GitHub, and triggers ArgoCD to deploy the application to the Kubernetes cluster.
+
 ![CD Build Stage](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ClearCut-CD.png)
 
-### Ctrate the private key
+---
 
-```sh
+## ☁️ Infrastructure Setup with Terraform on AWS
+
+### 🔑 Step 1: Create an SSH Key Pair
+
+```bash
 ssh-keygen -f ClearCut-key
 ```
+This will generate ClearCut-key and ClearCut-key.pub. You'll use this to access your AWS EC2 instance.
 
-### Start The Terrafrom 
+### 🌱 Initialize Terraform 
 ```sh
 terrafrom init
 terrafrom plan
 terrafrom apply
 ```
+After applying, Terraform will create:
+
+1 EC2 instance (Ubuntu) in us-east-1 region  
+Instance type: t2.large (2 vCPU, 8 GB RAM)  
+Storage: 29 GB SSD
+
+
+### 🔗 Connect to the EC2 Instance
+```sh
+ssh -i ClearCut-key ubuntu@<EC2_PUBLIC_IP>
+```
+## 🛠️ Initial Server Setup
+
+### 🔄 Update Package Index (for Ubuntu)
+```sh
+sudo apt-get update -y
+```
+## 📂 Clone the Repository & Prepare Automation Scripts
+
+### 📥 Clone the Repo Inside Your EC2 Instance
+```sh 
+git clone https://github.com/Debjyoti2004/ClearCut.git
+cd ClearCut/scripts
+
+```
+## 🔐 Script Permissions & Execution
+
+### 🧾 Before Changing Permissions
+Here’s how the files look before applying execution permissions:
+
+![Before-file-permission-change](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Before-file-permission-change.png)
+
+### ✅ Apply Permissions & Run Automation Script 
+```sh
+chmod +x permissionexecute.sh
+./permissionexecute.sh
+```
+This script grants executable permissions to all necessary setup scripts in the folder.
+### 🔓 After Changing Permissions
+You’ll see that all scripts now have executable permission:
+
+![After-file-permission](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/After-file-permission.png)
