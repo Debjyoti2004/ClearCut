@@ -88,3 +88,25 @@ npm run dev
 docker-compose -up
 ```
 Make sure Docker is installed and running.
+
+---
+## ⚙️ From Here, DevOps Takes Over 🚀
+
+Once the app is developed and tested locally, the automated DevSecOps pipeline takes over to ensure quality, security, and smooth deployment.
+
+### 🔐 CI/CD + GitOps Workflow:
+
+1. ✅ **Code Commit:** Developer pushes code to GitHub.
+2. ⚙️ **Jenkins CI:** Triggers automated build and testing pipeline.
+   - Runs dependency checks (OWASP)
+   - Scans vulnerabilities (Trivy)
+   - Code quality analysis (SonarQube)
+3. 🐳 **Docker:** Builds and pushes Docker image to registry.
+4. 🔁 **Jenkins CD:** Updates version and triggers deployment.
+5. 📦 **ArgoCD:** Pulls new version and deploys to Kubernetes.
+6. 🧠 **Monitoring:** Prometheus + Grafana monitor live performance.
+7. 📬 **Notifications:** Gmail alerts are sent post-deployment.
+
+All steps are automated and version-controlled, ensuring production-ready, secure deployments with zero manual intervention.
+
+---
