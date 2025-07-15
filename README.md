@@ -5,7 +5,7 @@
 ---
 ## 🖼️ App Preview
 
-<img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Home-page.png" width="600" alt="ClearCut Result" />
+<img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Home-page.png" width="850" alt="ClearCut Result" />
 
 ---
 ## 🧩 Architecture Overview
