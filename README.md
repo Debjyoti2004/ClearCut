@@ -48,9 +48,9 @@ ClearCut is built with a **DevSecOps-first mindset**, ensuring secure, automated
 - **Security Scans:** Trivy, OWASP Dependency Check
 - **Code Quality:** SonarQube
 - **Containerization:** Docker
-- **GitOps Deployment:** ArgoCD + Kubernetes
+- **GitOps Deployment:** ArgoCD + Kubernetes (AWS EKS)
 - **Infrastructure as Code:** Terraform, Helm
-- **Monitoring & Alerts:** Prometheus, Grafana, Gmail
+- **Monitoring (Helm) & Alerts:** Prometheus, Grafana, Gmail
 
 ---
 ## 🧑‍💻 Local Development
@@ -78,11 +78,13 @@ cd ClearCut
 ```
 
 ### 📦 Install Dependencies
+```sh
 npm install
-
+```
 ## ▶️ Run Frontend & Backend (Dev Mode)
+```sh
 npm run dev
-
+```
 ## 🐳 Run Using Docker Compose
 ```sh
 docker-compose -up
@@ -110,9 +112,23 @@ Once the app is developed and tested locally, the automated DevSecOps pipeline t
 All steps are automated and version-controlled, ensuring production-ready, secure deployments with zero manual intervention.
 
 ---
+## How pipeline will look after deployment:
+
+- <b>CI pipeline to build and push</b>
+![CI Build Stage](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ClearCut-CI-build.png)
+
+- <b>CD pipeline to update application version</b>
+![CD Build Stage](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ClearCut-CD.png)
 
 ### Ctrate the private key
 
 ```sh
 ssh-keygen -f ClearCut-key
+```
+
+### Start The Terrafrom 
+```sh
+terrafrom init
+terrafrom plan
+terrafrom apply
 ```
