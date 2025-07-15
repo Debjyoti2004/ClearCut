@@ -151,6 +151,7 @@ After applying, Terraform will create:
 Instance type: t2.large (2 vCPU, 8 GB RAM)  
 Storage: 29 GB SSD
 
+![Before-file-permission-change](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Before-file-permission-change.png)
 
 ### 🔗 Connect to the EC2 Instance
 ```sh
@@ -187,3 +188,115 @@ This script grants executable permissions to all necessary setup scripts in the 
 You’ll see that all scripts now have executable permission:
 
 ![After-file-permission](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/After-file-permission.png)
+
+---
+
+## 🐳 Installing Docker & SonarQube
+
+Let's begin by installing our very first DevOps tool: **Docker**.  
+All necessary steps are scripted inside the `docker.sh` file — including the setup for **SonarQube** using Docker.
+
+## 🚀 Run the Docker setup script:
+
+```bash
+./docker.sh
+```
+
+### ✅ Post-Installation (Important Step):
+To run Docker without using sudo every time:
+```sh
+sudo usermod -aG docker $USER && newgrp docker
+
+```
+### 🌐 Access SonarQube in Your Browser:
+```sh 
+http://<EC2_PUBLIC_IP>:9000
+```
+## ⚙️ Installing Jenkins
+Once Docker is up and running, install Jenkins using the provided script.
+### ▶️ Run the Jenkins setup script:
+```sh 
+./jenkins.sh
+```
+
+### 🌐 Access Jenkins in Your Browser:
+```sh 
+http://<EC2_PUBLIC_IP>:8080
+```
+Tip: If the page doesn't load immediately, give it a minute or two — Jenkins takes some time on the first startup.
+
+## ☁️ AWS & Kubernetes CLI Setup
+
+Before provisioning the EKS cluster and node groups, we need to configure some AWS tools and credentials.
+
+---
+
+### 🔑 Create a Key Pair for EKS Node Group
+
+This key pair will be used later to access nodes provisioned inside your EKS cluster.
+
+![Create-keypair-eks](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Create-keypair-eks.png)
+
+---
+
+### 🔐 Create IAM User with Full Access
+
+- Go to the AWS Console → IAM → Create a user with **programmatic access**
+- Attach the **AdministratorAccess** policy
+- Download and store the **Access Key ID** and **Secret Access Key** securely  
+  (You'll use them to configure the AWS CLI)
+
+---
+
+### 🛠️ Install AWS CLI
+
+```bash
+./awscli.sh
+ ```
+### ⚙️ Configure AWS CLI 
+ ```sh
+aws configure
+ ```
+Provide the following when prompted:
+
+AWS Access Key ID [None]: <YOUR_ACCESS_KEY_ID>
+AWS Secret Access Key [None]: <YOUR_SECRET_ACCESS_KEY>
+Default region name [None]: us-east-1
+Default output format [None]: json
+
+ ## 🧰 Kubernetes CLI Tools Setup
+ ### 📦 Install kubectl
+ ```sh
+./kubectl.sh
+ ```
+ ### 📦 Install eksctl
+ ```sh
+ ./eksctl.sh
+ ```
+#### Create EKS Cluster 
+```sh
+eksctl create cluster --name=ClearCut \
+                    --region=us-east-1 \
+                    --version=1.30 \
+                    --without-nodegroup
+```
+### Associate IAM OIDC Provider
+```sh 
+eksctl utils associate-iam-oidc-provider \
+  --region us-east-1 \
+  --cluster ClearCut \
+  --approve
+```
+#### Create Nodegroup
+```sh 
+eksctl create nodegroup --cluster=ClearCut \
+                     --region=us-east-1 \
+                     --name=ClearCut \
+                     --node-type=t2.large \
+                     --nodes=2 \
+                     --nodes-min=2 \
+                     --nodes-max=2 \
+                     --node-volume-size=29 \
+                     --ssh-access \
+                     --ssh-public-key=eks-nodegroup-key 
+````
