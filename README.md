@@ -1,49 +1,90 @@
 # ✂️ ClearCut
 
-**ClearCut** is a full-stack AI-based web application that removes image backgrounds and allows users to download the output — all powered by a modern DevSecOps pipeline for seamless integration, deployment, and security.
+**ClearCut** is a full-stack AI-powered web application that removes image backgrounds and lets users download the output — all wrapped in a robust DevSecOps pipeline featuring CI/CD, security scanning, containerization, GitOps deployment, and monitoring.
 
 ---
+
 ## 🖼️ App Preview
 
-<img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Home-page.png" width="850" alt="ClearCut Result" />
+<img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Home-page.png" width="850" alt="ClearCut UI Preview" />
 
 ---
+
 ## 🧩 Architecture Overview
 
-This project follows a DevSecOps-first approach with CI/CD integration and automated quality checks:
+ClearCut is built with a **DevSecOps-first mindset**, ensuring secure, automated builds and deployments with visibility and control at every step.
 
-<img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Ci-CD-Architecture.gif" width="850" alt="DevSecOps GitOps Pipeline" />
+<img src="https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Ci-CD-Architecture.gif" width="850" alt="CI/CD DevSecOps Pipeline" />
 
 ---
+
 ## 🚀 Features
 
-- ✨ **Background Removal**
-- 📤 Upload and preview images (PNG, JPG, etc.)
-- ⚡ Fast, efficient background removal
-- 📥 One-click download of the transparent image
-- 🔐 Secure and automated DevOps pipeline (CI/CD)
-- 📊 Integrated with quality/security tools: SonarQube, Trivy, OWASP
-- 🚢 Dockerized and deployed on Kubernetes via ArgoCD
+- ✨ **AI-Powered Background Removal**
+- 🖼️ Upload and preview images (PNG, JPG, etc.)
+- ⚡ Fast and efficient processing
+- 📥 One-click download of transparent images
+- 🔐 Secure, automated CI/CD pipeline
+- 🧪 Integrated scanning with **Trivy**, **OWASP**, and **SonarQube**
+- 🚀 Dockerized and deployed using **ArgoCD + Kubernetes**
+- 📊 Full observability with **Grafana + Prometheus**
+- 📬 Gmail notifications on production deployments
 
 ---
 
 ## 🧠 Tech Stack
 
-### 🛠 Development
+### 🛠️ Development
 
-- **Frontend:** JavaScript / React / HTML / CSS
+- **Frontend:** Vite / React / JavaScript / HTML / CSS
 - **Backend:** Node.js / Express
 - **Database:** MongoDB
+- **Image Processing API:** ClipDrop
+- **Authentication:** Clerk.dev
 
 ### ⚙️ DevOps & Infrastructure
 
-- **CI/CD:** Jenkins
-- **Security Scans:** OWASP Dependency Check, Trivy
-- **Quality Gates:** SonarQube
+- **CI/CD:** Jenkins (CI + CD Pipelines)
+- **Security Scans:** Trivy, OWASP Dependency Check
+- **Code Quality:** SonarQube
 - **Containerization:** Docker
-- **Deployment:** ArgoCD + Kubernetes (GitOps)
+- **GitOps Deployment:** ArgoCD + Kubernetes
 - **Infrastructure as Code:** Terraform, Helm
-- **Monitoring:** Prometheus, Grafana
-- **Notification:** Gmail alerts on deployments
+- **Monitoring & Alerts:** Prometheus, Grafana, Gmail
 
 ---
+## 🧑‍💻 Local Development
+
+### 🧪Environment Variables Setup
+
+Create the following `.env` files before starting the app:
+
+### 📦 Backend: `backend/.env`
+```env
+MONGODB_URI = <YOUR MONGODB URI>
+CLERK_WEBHOOK_SECRET = <YOUR CLERK WEBHOOK SECREL>
+CLIPDROP_API = <YOUR CLIPDROP_API>
+```
+### 🎨 Frontend: `frontend/.env`
+```env
+VITE_CLERK_PUBLISHABLE_KEY= <YOUR CLERK PUBLISHABLE KEY>
+VITE_BACKEND_URL = <YOUR BACKEND URL>
+```
+
+### 🔁 Clone the Repo
+```bash
+git clone https://github.com/Debjyoti2004/ClearCut.git
+cd ClearCut
+```
+
+### 📦 Install Dependencies
+npm install
+
+## ▶️ Run Frontend & Backend (Dev Mode)
+npm run dev
+
+## 🐳 Run Using Docker Compose
+```sh
+docker-compose -up
+```
+Make sure Docker is installed and running.
