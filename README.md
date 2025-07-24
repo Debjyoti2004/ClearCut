@@ -151,7 +151,7 @@ After applying, Terraform will create:
 Instance type: t2.large (2 vCPU, 8 GB RAM)  
 Storage: 29 GB SSD
 
-![Before-file-permission-change](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/Before-file-permission-change.png)
+![Before-file-permission-change](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/All-the-secrityGroup-port.png)
 
 ### 🔗 Connect to the EC2 Instance
 ```sh
