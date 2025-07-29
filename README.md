@@ -320,3 +320,260 @@ eksctl create nodegroup --cluster=ClearCut \
 ```sh 
 kubectl get nodes
 ```
+
+----
+## 🛠️ DevSecOps: Installing Trivy & Argo CD
+
+### 🔍 Install Trivy (Image Scanner)
+
+To install and run Trivy on your system, use the provided script:
+
+```bash
+./trivy
+```
+
+This will install Trivy and allow you to run vulnerability scans on your Docker images like so:
+```bash
+trivy image your-image-name
+```
+
+### 🚀 Install Argo CD (GitOps CD Tool)
+```bash
+./argocd
+```
+
+This script will:
+- Install Argo CD in its own argocd namespace
+- Expose the Argo CD server on a NodePort
+- Install the Argo CD CLI
+- Print out the exposed services and the admin password
+
+### 🔐 Argo CD Screenshots
+
+<b>✅ After Login</b>
+![Argocd](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ArgoCD-start-home.png)
+
+## 🗝️ Get the Argo CD Admin Password
+Run this command (already included at the end of the ./argocd script):
+```sh
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d; echo
+
+```
+
+```sh
+  http://<your-node-ip>:<node-port>
+```
+
+  - <b>Username: admin</b>
+  - <b>Password: (output from above command)</b>
+
+  Now you can log into Argo CD at:
+  
+  - <b> Now, go to <mark>User Info</mark> and update your argocd password
+
+## 🚀 ArgoCD CLI Login and Cluster Setup
+
+---
+
+### 🔐 Logging into ArgoCD via CLI
+
+Use the following command to log in to your ArgoCD server:
+
+```bash
+argocd login <ARGOCD_SERVER> --username admin --password <PASSWORD>
+```
+
+📷 Login Screenshot:_
+
+![Login Screenshot](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ArgoCD-login.png)
+
+---
+
+### 📡 Viewing All ArgoCD Services
+
+To check all the ArgoCD-related services running in your cluster:
+
+```bash
+kubectl get svc -n argocd
+```
+
+📷 All ArgoCD Services:_
+
+![All ArgoCD Services](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ArgoCD-Service.png)
+
+---
+
+### 🌐 Verifying ArgoCD Cluster Connection
+
+To list all registered clusters with ArgoCD:
+
+```bash
+argocd cluster list
+```
+
+📷 ArgoCD Cluster Screenshot:_
+
+![ArgoCD Cluster Screenshot](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/ArgoCD-cluster-list.png)
+
+---
+
+
+  ## 📊 How to Monitor EKS Cluster, Kubernetes Components, and Workloads Using Prometheus & Grafana via Helm
+
+### 🛠️ Step 1: Install Helm on Your Master Node
+
+```bash
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+```
+
+---
+
+### 📦 Step 2: Add Required Helm Repositories
+
+```bash
+helm repo add stable https://charts.helm.sh/stable
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+---
+
+### 📂 Step 3: Create a Dedicated Namespace for Prometheus
+
+```bash
+kubectl create namespace prometheus
+kubectl get ns
+```
+
+---
+
+### 🚀 Step 4: Install Prometheus & Grafana Using Helm
+
+```bash
+helm install stable prometheus-community/kube-prometheus-stack -n prometheus
+```
+
+Wait for a bit and check if the pods are running:
+
+```bash
+kubectl get pods -n prometheus
+```
+
+---
+
+### 🔍 Step 5: View Prometheus & Grafana Services
+
+```bash
+kubectl get svc -n prometheus
+```
+
+Initially, both services will be of type `ClusterIP` (not accessible externally).
+
+---
+
+### 🔌 Step 6: Expose Prometheus and Grafana to External World
+
+By default, both services are internal. You need to expose them externally using `NodePort`.
+
+---
+
+#### 🔧 Option 1: Manually Edit the Service
+
+**Prometheus:**
+
+```bash
+kubectl edit svc stable-kube-prometheus-sta-prometheus -n prometheus
+```
+
+**Grafana:**
+
+```bash
+kubectl edit svc stable-grafana -n prometheus
+```
+
+In the YAML that opens, change:
+
+```yaml
+type: ClusterIP
+```
+
+to:
+
+```yaml
+type: NodePort
+```
+
+📷 _After Changing to NodePort:_
+
+![After Changing to NodePort](https://raw.githubusercontent.com/Debjyoti2004/ClearCut/master/assets/prometheus-edit.png)
+
+---
+
+#### ⚙️ Option 2: Use Patch Commands (Quick & Easy)
+
+```bash
+kubectl patch svc stable-kube-prometheus-sta-prometheus -n prometheus -p '{"spec": {"type": "NodePort"}}'
+kubectl patch svc stable-grafana -n prometheus -p '{"spec": {"type": "NodePort"}}'
+```
+
+---
+
+### ✅ Step 7: Confirm Services Are Exposed
+
+```bash
+kubectl get svc -n prometheus
+```
+
+Look for the `NodePort` value assigned to Prometheus and Grafana.
+
+Use the EC2 public IP and NodePort to access:
+
+- **Grafana**: `http://<EC2_PUBLIC_IP>:<Grafana_NodePort>`
+- **Prometheus**: `http://<EC2_PUBLIC_IP>:<Prometheus_NodePort>`
+
+---
+
+### 🔑 Step 8: Get Grafana Admin Password
+
+By default, the username is `admin`. You can get the password with:
+
+```bash
+kubectl get secret --namespace prometheus stable-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+```
+
+---
+
+### 📈 Step 9: Access Grafana Dashboard
+
+Once exposed, access Grafana from your browser:
+
+### 🧹 Step 10: Cleanup (Optional)
+
+To delete your cluster when done:
+
+```bash
+eksctl delete cluster --name=ClearCut --region=us-east-1
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+
+If you’d like to contribute to this project:
+
+1. 🍴 Fork the repository
+2. 🔧 Create a new branch (`git checkout -b feature/your-feature-name`)
+3. ✍️ Make your changes
+4. ✅ Commit your changes (`git commit -m "feat: add your feature"`)
+5. 🚀 Push to your branch (`git push origin feature/your-feature-name`)
+6. 🔃 Open a Pull Request
+
+Please make sure your code follows the project's coding style and includes relevant documentation/comments if necessary.
+
+Thank you for helping improve this project! 💙
+
