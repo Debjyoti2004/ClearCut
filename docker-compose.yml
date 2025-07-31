@@ -13,7 +13,7 @@ services:
       - clearcut-app-network
 
   backend:
-    build: ./server
+    build: ./frontend
     container_name: clearcut-backend
     depends_on:
       - mongo
@@ -24,7 +24,7 @@ services:
   
 
   frontend:
-    build: ./client
+    build: ./backend
     container_name: clearcut-frontend
     ports:
       - "3000:80"

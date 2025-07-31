@@ -10,6 +10,10 @@
 
 ---
 
+## 🌐 Live Demo
+
+Check out the live application here: [clear-cut-swart.vercel.app](https://clear-cut-swart.vercel.app)
+
 ## 🧩 Architecture Overview
 
 ClearCut is built with a **DevSecOps-first mindset**, ensuring secure, automated builds and deployments with visibility and control at every step.
